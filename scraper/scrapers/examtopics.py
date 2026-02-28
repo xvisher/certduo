@@ -59,7 +59,7 @@ VOTED_ANSWER_SELECTORS = [
 ]
 
 
-def scrape_examtopics(cert_code: str, max_pages: int = 10) -> list[dict]:
+def scrape_examtopics(cert_code: str, max_pages: int = 60) -> list[dict]:
     """
     Scrape questions from ExamTopics.
     Returns a list of question dicts.
@@ -72,28 +72,65 @@ def scrape_examtopics(cert_code: str, max_pages: int = 10) -> list[dict]:
     current_page = 1
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        # Use system Google Chrome (properly macOS-signed, avoids Cloudflare)
+        # Falls back to Playwright Chromium if Chrome not installed
+        try:
+            browser = p.chromium.launch(
+                channel="chrome",
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-infobars",
+                    "--start-maximized",
+                ],
+            )
+        except Exception:
+            browser = p.chromium.launch(
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                ],
+            )
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/120.0.0.0 Safari/537.36"
             ),
-            viewport={"width": 1280, "height": 800},
+            viewport={"width": 1280, "height": 900},
+            locale="en-US",
+            timezone_id="America/New_York",
         )
         page = context.new_page()
 
-        page.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });"
-        )
+        # Comprehensive webdriver/automation hiding
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            window.chrome = { runtime: {} };
+        """)
+
+        # ── Login gate ────────────────────────────────────────────────────
+        # Navigate to login page and wait for user to sign in manually
+        print("\n>>> Opening ExamTopics login page...")
+        print(">>> Please sign in to your ExamTopics account in the browser window.")
+        print(">>> Press ENTER here once you are logged in.\n")
+        page.goto("https://www.examtopics.com/login/", wait_until="domcontentloaded", timeout=30000)
+        time.sleep(2)
+        input("    [Waiting for login — press ENTER when done] ")
+        print()
 
         while current_page <= max_pages:
             url = f"{BASE_URL}/{exam_path}/view/{current_page}/"
             print(f"Scraping page {current_page}: {url}")
 
             try:
-                page.goto(url, wait_until="networkidle", timeout=60000)
-                time.sleep(3)
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                # Wait for Cloudflare challenge to complete if present
+                time.sleep(6)
 
                 # Dismiss cookie/modal overlays
                 for dismiss_sel in [
@@ -116,6 +153,24 @@ def scrape_examtopics(cert_code: str, max_pages: int = 10) -> list[dict]:
 
             html = page.content()
             soup = BeautifulSoup(html, "lxml")
+
+            # ── CAPTCHA / login wall detection ────────────────────────────
+            # Retry up to 3 times, pausing for user to solve challenge
+            page_text = soup.get_text().lower()
+            blocked_signals = ["captcha", "verify you are human", "checking your browser",
+                               "login", "sign in to continue", "access denied"]
+            retry_count = 0
+            while not soup.select(QUESTION_CONTAINER_SELECTORS[0]) and \
+                    any(sig in page_text for sig in blocked_signals) and \
+                    retry_count < 3:
+                print(f"\n  ⚠️  Challenge detected on page {current_page}.")
+                print("  Please solve the CAPTCHA or log in again in the browser window.")
+                input("  Press ENTER when the page is showing questions again: ")
+                time.sleep(3)
+                html = page.content()
+                soup = BeautifulSoup(html, "lxml")
+                page_text = soup.get_text().lower()
+                retry_count += 1
 
             # Try each container selector
             question_els = []

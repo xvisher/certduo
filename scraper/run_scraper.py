@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Main scraper runner. Runs both Microsoft Learn and ExamTopics scrapers,
+Main scraper runner. Runs all configured scrapers,
 normalizes the data, and saves to JSON output files.
 
 Usage:
     python3 run_scraper.py --cert az-900
-    python3 run_scraper.py --cert az-900 --sources microsoft examtopics
+    python3 run_scraper.py --cert az-900 --sources github examtopics
     python3 run_scraper.py --all
+    python3 run_scraper.py --all --sources github
 """
 
 import argparse
@@ -37,26 +38,41 @@ def run_scraper(cert_code: str, sources: list):
     print("="*60)
 
     all_questions = []
+    step = 1
+    total_steps = len(sources)
+
+    if "github" in sources:
+        try:
+            print(f"\n[{step}/{total_steps}] Scraping GitHub (Ditectrev)...")
+            from scrapers.github_scraper import scrape_github
+            gh_questions = scrape_github(cert_code)
+            all_questions.extend(gh_questions)
+            print(f"  → {len(gh_questions)} questions from GitHub")
+        except Exception as e:
+            print(f"  ✗ GitHub scraping failed: {e}")
+        step += 1
 
     if "microsoft" in sources:
         try:
-            print("\n[1/2] Scraping Microsoft Learn...")
+            print(f"\n[{step}/{total_steps}] Scraping Microsoft Learn...")
             from scrapers.microsoft_learn import scrape_microsoft_learn
             ms_questions = scrape_microsoft_learn(cert_code)
             all_questions.extend(ms_questions)
             print(f"  → {len(ms_questions)} questions from Microsoft Learn")
         except Exception as e:
             print(f"  ✗ Microsoft Learn scraping failed: {e}")
+        step += 1
 
     if "examtopics" in sources:
         try:
-            print("\n[2/2] Scraping ExamTopics...")
+            print(f"\n[{step}/{total_steps}] Scraping ExamTopics (free pages only)...")
             from scrapers.examtopics import scrape_examtopics
-            et_questions = scrape_examtopics(cert_code)
+            et_questions = scrape_examtopics(cert_code, max_pages=3)
             all_questions.extend(et_questions)
             print(f"  → {len(et_questions)} questions from ExamTopics")
         except Exception as e:
             print(f"  ✗ ExamTopics scraping failed: {e}")
+        step += 1
 
     if not all_questions:
         print("No questions scraped.")
@@ -106,9 +122,9 @@ def main():
     parser.add_argument(
         "--sources",
         nargs="+",
-        choices=["microsoft", "examtopics"],
-        default=["microsoft", "examtopics"],
-        help="Which sources to scrape",
+        choices=["github", "microsoft", "examtopics"],
+        default=["github", "examtopics"],
+        help="Which sources to scrape (default: github examtopics)",
     )
     parser.add_argument("--all", action="store_true", help="Scrape all certifications")
     args = parser.parse_args()
