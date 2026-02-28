@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Certifications ───
+
+model Certification {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  iconUrl      String?
+  totalModules Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  modules   Module[]
+  questions Question[]
+  userCerts UserCertification[]
+  exams     Exam[]
+}
+
+model Module {
+  id              String   @id @default(cuid())
+  certificationId String
+  title           String
+  description     String?
+  orderIndex      Int
+  msLearnUrl      String?
+  createdAt       DateTime @default(now())
+
+  certification Certification @relation(fields: [certificationId], references: [id])
+  topics        Topic[]
+  questions     Question[]
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  moduleId    String
+  title       String
+  content     String?  @db.Text
+  readingTime Int      @default(5)
+  msLearnUrl  String
+  orderIndex  Int
+  createdAt   DateTime @default(now())
+
+  module    Module              @relation(fields: [moduleId], references: [id])
+  questions Question[]
+  userDocs  UserDocumentation[]
+}
+
+// ─── Questions ───
+
+enum QuestionSource {
+  MICROSOFT
+  EXAMTOPICS
+  COMMUNITY
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  DRAG_DROP
+}
+
+model Question {
+  id                 String         @id @default(cuid())
+  certificationId    String
+  moduleId           String?
+  topicId            String?
+  questionText       String
+  questionType       QuestionType   @default(SINGLE_CHOICE)
+  answers            Json
+  explanation        String?
+  source             QuestionSource
+  sourceUrl          String?
+  sourceIcon         String?
+  documentationLinks Json?
+  difficulty         Int            @default(1)
+  communityScore     Float?
+  isActive           Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  certification Certification          @relation(fields: [certificationId], references: [id])
+  module        Module?                @relation(fields: [moduleId], references: [id])
+  topic         Topic?                 @relation(fields: [topicId], references: [id])
+  userProgress  UserQuestionProgress[]
+}
+
+// ─── Users ───
+
+model User {
+  id            String    @id @default(cuid())
+  microsoftId   String    @unique
+  email         String    @unique
+  displayName   String
+  avatarUrl     String?
+  timezone      String?   @default("UTC")
+  preferredTime String?   @default("08:00")
+  tier          String    @default("free")
+  streakCount   Int       @default(0)
+  lastActiveAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  certifications    UserCertification[]
+  questionProgress  UserQuestionProgress[]
+  documentation     UserDocumentation[]
+  exams             Exam[]
+  sessions          Session[]
+  pushSubscriptions PushSubscription[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── User Progress ───
+
+model UserCertification {
+  id              String    @id @default(cuid())
+  userId          String
+  certificationId String
+  status          String    @default("active")
+  currentModuleId String?
+  percentComplete Float     @default(0)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  user          User          @relation(fields: [userId], references: [id])
+  certification Certification @relation(fields: [certificationId], references: [id])
+
+  @@unique([userId, certificationId])
+}
+
+model UserQuestionProgress {
+  id                String    @id @default(cuid())
+  userId            String
+  questionId        String
+  status            String    @default("unseen")
+  easeFactor        Float     @default(2.5)
+  interval          Int       @default(0)
+  repetitions       Int       @default(0)
+  nextReviewDate    DateTime?
+  lastAnsweredAt    DateTime?
+  lastAnswerCorrect Boolean?
+  timesAnswered     Int       @default(0)
+  timesCorrect      Int       @default(0)
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+}
+
+model UserDocumentation {
+  id               String    @id @default(cuid())
+  userId           String
+  topicId          String
+  docUrl           String
+  status           String    @default("unread")
+  linkedQuestionId String?
+  assignedAt       DateTime  @default(now())
+  readAt           DateTime?
+  confirmedAt      DateTime?
+
+  user  User  @relation(fields: [userId], references: [id])
+  topic Topic @relation(fields: [topicId], references: [id])
+
+  @@unique([userId, topicId, docUrl])
+}
+
+// ─── Exams ───
+
+model Exam {
+  id              String    @id @default(cuid())
+  userId          String
+  certificationId String
+  score           Float?
+  passed          Boolean?
+  totalQuestions  Int
+  correctAnswers  Int       @default(0)
+  status          String    @default("in_progress")
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  answers         Json?
+
+  user          User          @relation(fields: [userId], references: [id])
+  certification Certification @relation(fields: [certificationId], references: [id])
+}
+
+// ─── Push Notifications ───
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,76 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+interface NavbarProps {
+  user?: {
+    displayName: string;
+    avatarUrl?: string | null;
+    streakCount: number;
+  };
+}
+
+const NAV_LINKS = [
+  { href: "/dashboard", label: "Home", icon: "🏠" },
+  { href: "/certifications", label: "Certs", icon: "📋" },
+  { href: "/progress", label: "Progress", icon: "📊" },
+  { href: "/settings", label: "Settings", icon: "⚙️" },
+];
+
+export function Navbar({ user }: NavbarProps) {
+  const pathname = usePathname();
+
+  return (
+    <>
+      {/* Top header */}
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-3">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#0078D4] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">C</span>
+            </div>
+            <span className="font-bold text-gray-900">CertDuo</span>
+          </Link>
+
+          {user && (
+            <div className="flex items-center gap-3">
+              {user.streakCount > 0 && (
+                <div className="flex items-center gap-1 text-orange-500 font-semibold text-sm">
+                  <span>🔥</span>
+                  <span>{user.streakCount}</span>
+                </div>
+              )}
+              <div className="w-8 h-8 rounded-full bg-[#0078D4] flex items-center justify-center text-white text-sm font-semibold">
+                {user.displayName.charAt(0).toUpperCase()}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Bottom mobile nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-4 py-2 safe-area-inset-bottom">
+        <div className="max-w-2xl mx-auto flex items-center justify-around">
+          {NAV_LINKS.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(link.href + "/");
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors",
+                  active ? "text-[#0078D4]" : "text-gray-400"
+                )}
+              >
+                <span className="text-xl">{link.icon}</span>
+                <span className="text-xs font-medium">{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
+  );
+}

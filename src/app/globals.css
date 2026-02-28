@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ms-blue: #0078D4;
+  --ms-green: #107C10;
+  --ms-red: #D13438;
 }
 
 @theme inline {
@@ -23,4 +26,40 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Progress ring animation */
+@keyframes progress-ring {
+  from {
+    stroke-dashoffset: 251.2;
+  }
+}
+
+/* Streak fire animation */
+@keyframes pulse-fire {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.streak-fire {
+  animation: pulse-fire 2s ease-in-out infinite;
+}
+
+/* Answer feedback animations */
+@keyframes slide-in-correct {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slide-in-incorrect {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.answer-correct {
+  animation: slide-in-correct 0.3s ease-out;
+}
+
+.answer-incorrect {
+  animation: slide-in-incorrect 0.3s ease-out;
 }
