@@ -54,6 +54,25 @@ const TIME_OPTIONS: TimeOption[] = [
   },
 ];
 
+const LS_DURATION_KEY = "certduo_study_duration";
+
+function getSavedDuration(): TimeOption | null {
+  try {
+    const saved = localStorage.getItem(LS_DURATION_KEY);
+    if (!saved) return null;
+    const minutes = parseInt(saved, 10);
+    return TIME_OPTIONS.find((o) => o.minutes === minutes) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDuration(option: TimeOption) {
+  try {
+    localStorage.setItem(LS_DURATION_KEY, String(option.minutes));
+  } catch {}
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function LearnPage() {
@@ -72,20 +91,45 @@ export default function LearnPage() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Initial load: get topic info for setup screen ─────────────────────────
+  // ── Initial load: auto-start if duration is saved, else show setup ───────
   const loadSession = useCallback(async () => {
     setPhase("loading");
+    const saved = getSavedDuration();
     try {
-      const res = await fetch(`/api/learn/${certCode}/session?questionCount=2`);
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to load session");
-        setPhase("empty");
-        return;
+      if (saved) {
+        // Skip setup screen — go straight to quiz with saved preference
+        const res = await fetch(
+          `/api/learn/${certCode}/session?questionCount=${saved.questions}`
+        );
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || "Failed to load session");
+          setPhase("empty");
+          return;
+        }
+        const data: SessionData = await res.json();
+        if (!data.questions || data.questions.length === 0) {
+          setPhase("empty");
+          return;
+        }
+        setSession(data);
+        setSelectedTime(saved);
+        setCurrentIndex(0);
+        setTimeRemaining(saved.minutes * 60);
+        setPhase(data.topic?.content ? "reading" : "quiz");
+      } else {
+        // No saved preference — show setup screen
+        const res = await fetch(`/api/learn/${certCode}/session?questionCount=2`);
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || "Failed to load session");
+          setPhase("empty");
+          return;
+        }
+        const data: SessionData = await res.json();
+        setSession(data);
+        setPhase("setup");
       }
-      const data: SessionData = await res.json();
-      setSession(data);
-      setPhase("setup");
     } catch {
       setError("Failed to load learning session");
       setPhase("empty");
@@ -96,8 +140,9 @@ export default function LearnPage() {
     loadSession();
   }, [loadSession]);
 
-  // ── Time option selected → fetch questions + start reading ────────────────
+  // ── Time option selected → save preference, fetch questions, start reading ─
   async function handleTimeSelect(option: TimeOption) {
+    saveDuration(option);
     setSelectedTime(option);
     setPhase("loading");
 
@@ -339,14 +384,11 @@ export default function LearnPage() {
         </div>
 
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href={`/learn/${certCode}/review`}>
-            <Button variant="outline">Review Docs</Button>
-          </Link>
           <button
             onClick={() => {
-              setPhase("setup");
               setSessionStats({ answered: 0, correct: 0 });
               setCurrentIndex(0);
+              loadSession();
             }}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-colors"
           >
@@ -356,6 +398,17 @@ export default function LearnPage() {
             <Button>See Progress →</Button>
           </Link>
         </div>
+        <button
+          onClick={() => {
+            try { localStorage.removeItem(LS_DURATION_KEY); } catch {}
+            setPhase("setup");
+            setSessionStats({ answered: 0, correct: 0 });
+            setCurrentIndex(0);
+          }}
+          className="mt-4 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          Change session duration
+        </button>
       </div>
     );
   }
