@@ -16,11 +16,17 @@ const nextConfig: NextConfig = {
 
 export default withPWA({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  // Do NOT cache navigation HTML — auth pages must always load fresh from network
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    // Force new service worker to activate immediately on all clients
+    skipWaiting: true,
+    clientsClaim: true,
+    // Exclude auth + API routes from any caching
+    exclude: [/\/auth\//, /\/api\//],
   },
 })(nextConfig);
