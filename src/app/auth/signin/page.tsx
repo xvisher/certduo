@@ -1,91 +1,36 @@
-"use client";
+/**
+ * Sign-in page — server component, no client-side JavaScript needed.
+ *
+ * The "Sign in with Microsoft" button is a plain <a> link that navigates
+ * to /api/auth/login, which redirects to Microsoft's authorize endpoint.
+ * After authentication, Microsoft redirects to /auth/callback which
+ * sets the session cookie and redirects to /dashboard.
+ */
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; error_description?: string }>;
+}) {
+  const params = await searchParams;
+  const error = params.error;
+  const errorDescription = params.error_description;
 
-import { useState } from "react";
-import { getMsalInstance, clearMsalState, loginRequest } from "@/lib/auth-client";
-
-export default function SignInPage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSignIn() {
-    setLoading(true);
-    setError(null);
-    try {
-      const msal = await getMsalInstance();
-
-      // Clear any stale interaction state from previous failed redirect attempts
-      // before calling loginPopup, otherwise MSAL throws interaction_in_progress
-      try {
-        await msal.handleRedirectPromise();
-      } catch {
-        // ignore — just draining any pending redirect state
-      }
-
-      // Use popup — no page navigation, no redirect issues, no service worker interference
-      const result = await msal.loginPopup({
-        ...loginRequest,
-        // Popup uses the same redirectUri but handles it internally
-        redirectUri: `${window.location.origin}/auth/callback`,
-      });
-
-      if (!result?.accessToken) {
-        setError("No access token received. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      // Exchange the token for a session cookie
-      const res = await fetch("/api/auth/callback", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accessToken: result.accessToken,
-          idToken: result.idToken,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        // Use a real form POST to /api/auth/establish-session
-        // This is a real browser navigation, so the Set-Cookie header
-        // from the response WILL be stored (unlike fetch() responses).
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/api/auth/establish-session";
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "token";
-        input.value = data.sessionToken;
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-        return; // form.submit() navigates the page
-      } else {
-        const body = await res.text().catch(() => "unknown error");
-        setError(`Sign-in failed (${res.status}): ${body}`);
-        setLoading(false);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("interaction_in_progress")) {
-        // Stale MSAL state — wipe it and retry once automatically
-        clearMsalState();
-        setLoading(false);
-        setError(null);
-        // Small delay then retry
-        setTimeout(() => handleSignIn(), 300);
-        return;
-      } else if (msg.includes("user_cancelled") || msg.includes("popup_window_error") || msg.includes("access_denied")) {
-        // User closed the popup — not an error
-        setError(null);
-      } else if (msg.includes("popup_blocked")) {
-        setError("Popup was blocked. Please allow popups for certduo.vercel.app and try again.");
-      } else {
-        setError(`Sign-in error: ${msg}`);
-      }
-      setLoading(false);
-    }
+  // Map OAuth error codes to user-friendly messages
+  let errorMessage: string | null = null;
+  if (error === "access_denied") {
+    errorMessage = "Sign-in was cancelled. Please try again.";
+  } else if (error === "invalid_state") {
+    errorMessage = "Security validation failed. Please try signing in again.";
+  } else if (error === "token_exchange_failed") {
+    errorMessage = "Something went wrong during sign-in. Please try again.";
+  } else if (error === "graph_failed") {
+    errorMessage = "Could not retrieve your profile. Please try again.";
+  } else if (error === "missing_params" || error === "no_access_token") {
+    errorMessage = "Sign-in was incomplete. Please try again.";
+  } else if (error === "server_error") {
+    errorMessage = "A server error occurred. Please try again later.";
+  } else if (error) {
+    errorMessage = errorDescription || "An unexpected error occurred. Please try again.";
   }
 
   return (
@@ -100,38 +45,33 @@ export default function SignInPage() {
           <p className="text-gray-500 text-sm mt-2">Sign in to start your certification journey</p>
         </div>
 
-        {/* Error */}
-        {error && (
+        {/* Error display */}
+        {errorMessage && (
           <div className="bg-red-50 text-red-600 rounded-xl p-3 text-sm mb-4">
-            {error}
+            {errorMessage}
           </div>
         )}
 
-        {/* Sign in button */}
-        <button
-          onClick={handleSignIn}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-[#0078D4] text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        {/* Sign in button — plain link, full page navigation, no JS */}
+        <a
+          href="/api/auth/login"
+          className="w-full flex items-center justify-center gap-3 bg-[#0078D4] text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
         >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-              <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-              <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
-              <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-            </svg>
-          )}
-          {loading ? "Signing in..." : "Sign in with Microsoft"}
-        </button>
+          <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+            <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+            <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+            <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+          </svg>
+          Sign in with Microsoft
+        </a>
 
         <p className="text-center text-xs text-gray-400 mt-6">
           By signing in, you agree to our Terms of Service and Privacy Policy.
         </p>
 
         <div className="mt-4 text-center">
-          <a href="/" className="text-sm text-[#0078D4] hover:underline">← Back to home</a>
+          <a href="/" className="text-sm text-[#0078D4] hover:underline">&larr; Back to home</a>
         </div>
       </div>
     </div>

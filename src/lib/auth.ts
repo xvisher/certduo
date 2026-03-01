@@ -1,24 +1,6 @@
-import { Configuration, PublicClientApplication } from "@azure/msal-browser";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-
-// ─── MSAL Browser Config (client-side) ───
-
-export const msalConfig: Configuration = {
-  auth: {
-    clientId: process.env.MSAL_CLIENT_ID!,
-    authority: `https://login.microsoftonline.com/${process.env.MSAL_TENANT_ID || "common"}`,
-    redirectUri: process.env.MSAL_REDIRECT_URI || "http://localhost:3000/auth/callback",
-  },
-  cache: {
-    cacheLocation: "sessionStorage",
-  },
-};
-
-export const loginRequest = {
-  scopes: ["User.Read", "openid", "profile", "email"],
-};
 
 // ─── Server-side session helpers ───
 
