@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { getMsalInstance, clearMsalState, loginRequest } from "@/lib/auth-client";
 
-export default function SignInPage() {
+function SignInContent() {
   const [loading, setLoading] = useState(true); // start true while we process any pending redirect
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Check for error param passed from callback page (legacy redirect path)
+    const errorParam = searchParams.get("error");
+    if (errorParam === "callback_failed") {
+      setError("Authentication failed — please try again.");
+    } else if (errorParam === "unknown") {
+      setError("An unexpected error occurred. Please try again.");
+    }
+
     // Always handle any pending redirect promise on mount.
     // This clears MSAL's in-progress flag and processes the return from Microsoft login.
     async function init() {
@@ -25,7 +36,7 @@ export default function SignInPage() {
       }
     }
     init();
-  }, []);
+  }, [searchParams]);
 
   async function exchangeTokenForSession(accessToken: string) {
     const res = await fetch("/api/auth/callback", {
@@ -109,5 +120,17 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#0078D4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }
