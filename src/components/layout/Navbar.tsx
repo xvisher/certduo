@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +14,10 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Home", icon: "🏠" },
-  { href: "/certifications", label: "Certs", icon: "📋" },
-  { href: "/progress", label: "Progress", icon: "📊" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+  { href: "/dashboard", label: "Home", icon: "/icons/icon-home.svg" },
+  { href: "/certifications", label: "Certs", icon: "/icons/icon-certs.svg" },
+  { href: "/progress", label: "Progress", icon: "/icons/icon-progress.svg" },
+  { href: "/settings", label: "Settings", icon: "/icons/icon-settings.svg" },
 ];
 
 export function Navbar({ user }: NavbarProps) {
@@ -64,7 +65,18 @@ export function Navbar({ user }: NavbarProps) {
                   active ? "text-[#0078D4]" : "text-gray-400"
                 )}
               >
-                <span className="text-xl">{link.icon}</span>
+                <Image
+                  src={link.icon}
+                  alt={link.label}
+                  width={24}
+                  height={24}
+                  className={cn(
+                    "transition-all",
+                    active
+                      ? "[filter:invert(29%)_sepia(89%)_saturate(1200%)_hue-rotate(190deg)_brightness(95%)]"
+                      : "opacity-40"
+                  )}
+                />
                 <span className="text-xs font-medium">{link.label}</span>
               </Link>
             );
