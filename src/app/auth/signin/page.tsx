@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getMsalInstance, loginRequest } from "@/lib/auth-client";
+import { getMsalInstance, clearMsalState, loginRequest } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState(false);
@@ -12,6 +12,14 @@ export default function SignInPage() {
     setError(null);
     try {
       const msal = await getMsalInstance();
+
+      // Clear any stale interaction state from previous failed redirect attempts
+      // before calling loginPopup, otherwise MSAL throws interaction_in_progress
+      try {
+        await msal.handleRedirectPromise();
+      } catch {
+        // ignore — just draining any pending redirect state
+      }
 
       // Use popup — no page navigation, no redirect issues, no service worker interference
       const result = await msal.loginPopup({
@@ -47,11 +55,19 @@ export default function SignInPage() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      // User cancelled the popup — don't show error
-      if (msg.includes("user_cancelled") || msg.includes("popup_window_error") || msg.includes("access_denied")) {
+      if (msg.includes("interaction_in_progress")) {
+        // Stale MSAL state — wipe it and retry once automatically
+        clearMsalState();
+        setLoading(false);
+        setError(null);
+        // Small delay then retry
+        setTimeout(() => handleSignIn(), 300);
+        return;
+      } else if (msg.includes("user_cancelled") || msg.includes("popup_window_error") || msg.includes("access_denied")) {
+        // User closed the popup — not an error
         setError(null);
       } else if (msg.includes("popup_blocked")) {
-        setError("Popup was blocked. Please allow popups for this site and try again.");
+        setError("Popup was blocked. Please allow popups for certduo.vercel.app and try again.");
       } else {
         setError(`Sign-in error: ${msg}`);
       }
