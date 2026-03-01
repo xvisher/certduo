@@ -1,198 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getMsalInstance } from "@/lib/auth-client";
+// This page is used as the redirect target for MSAL popup auth.
+// MSAL handles the popup callback automatically — this page just needs to exist.
+// It also handles direct navigation gracefully.
 
-interface DiagInfo {
-  url: string;
-  hasCode: boolean;
-  hasState: boolean;
-  msalKeyCount: number;
-  msalResult: string;
-  apiStatus?: number;
-  apiBody?: string;
-  sessionCheck?: string;
-}
+import { useEffect } from "react";
 
 export default function CallbackPage() {
-  const [status, setStatus] = useState("Processing sign-in...");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [diag, setDiag] = useState<DiagInfo | null>(null);
-
   useEffect(() => {
-    handleCallback();
+    // If this page is loaded outside of a popup (e.g., direct navigation),
+    // redirect to sign-in.
+    // When loaded inside an MSAL popup, MSAL will close the popup automatically
+    // before this redirect can execute.
+    const isInPopup = window.opener && window.opener !== window;
+    if (!isInPopup) {
+      // Give MSAL a moment to process if needed, then redirect
+      setTimeout(() => {
+        window.location.href = "/auth/signin";
+      }, 2000);
+    }
   }, []);
 
-  async function handleCallback() {
-    const search = window.location.search;
-    const hash = window.location.hash;
-    const fullUrl = window.location.href;
-    const params = new URLSearchParams(search || (hash.startsWith("#") ? hash.slice(1) : ""));
-    const diagInfo: DiagInfo = {
-      url: fullUrl,
-      hasCode: params.has("code"),
-      hasState: params.has("state"),
-      msalKeyCount: Object.keys(sessionStorage).filter(k => k.startsWith("msal")).length,
-      msalResult: "pending...",
-    };
-    setDiag({ ...diagInfo });
-
-    try {
-      setStatus("Initializing MSAL...");
-      const msal = await getMsalInstance();
-
-      setStatus("Calling handleRedirectPromise...");
-      const result = await msal.handleRedirectPromise();
-
-      if (result) {
-        diagInfo.msalResult = `✅ Got result — accessToken: ${result.accessToken ? "YES" : "MISSING"}, account: ${result.account?.username ?? "none"}`;
-      } else {
-        diagInfo.msalResult = "❌ NULL — no pending redirect detected";
-      }
-      setDiag({ ...diagInfo });
-
-      if (result?.accessToken) {
-        setStatus("Posting token to /api/auth/callback...");
-        const res = await fetch("/api/auth/callback", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            accessToken: result.accessToken,
-            idToken: result.idToken,
-          }),
-        });
-
-        diagInfo.apiStatus = res.status;
-        let bodyText = "";
-        try { bodyText = await res.text(); } catch {}
-        diagInfo.apiBody = bodyText;
-        setDiag({ ...diagInfo });
-
-        if (res.ok) {
-          // Verify the session was actually set by calling a protected endpoint
-          setStatus("Verifying session cookie...");
-          const check = await fetch("/api/auth/me", { credentials: "include" });
-          diagInfo.sessionCheck = `GET /api/auth/me → HTTP ${check.status}: ${await check.text().catch(() => "?")}`;
-          setDiag({ ...diagInfo });
-
-          setStatus("✅ Auth complete!");
-          setSuccess(true);
-        } else {
-          setError(`API error (${res.status}): ${bodyText}`);
-        }
-      } else {
-        setError("handleRedirectPromise() returned null. See diagnostics below.");
-      }
-    } catch (err) {
-      diagInfo.msalResult = diagInfo.msalResult.includes("pending")
-        ? `💥 THREW before MSAL: ${err instanceof Error ? err.message : String(err)}`
-        : diagInfo.msalResult;
-      const msg = err instanceof Error ? err.message : String(err);
-      setDiag({ ...diagInfo, msalResult: diagInfo.msalResult.includes("💥") ? diagInfo.msalResult : diagInfo.msalResult + ` | then threw: ${msg}` });
-      setError(`Exception: ${msg}`);
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start pt-8 px-4">
-      <div className="w-full max-w-lg">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[#0078D4] flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-lg">C</span>
-          </div>
-          <div>
-            <p className="font-bold text-gray-900">CertDuo Auth Callback</p>
-            <p className="text-xs text-gray-500">Debug mode — page will not auto-redirect</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#0078D4] flex items-center justify-center mx-auto mb-6">
+          <span className="text-white font-bold text-2xl">C</span>
         </div>
-
-        {/* Status */}
-        <div className="flex items-center gap-3 mb-4">
-          {!error && !success ? (
-            <div className="w-5 h-5 border-2 border-[#0078D4] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          ) : success ? (
-            <span className="text-green-500 text-xl">✓</span>
-          ) : (
-            <span className="text-red-500 text-xl">✗</span>
-          )}
-          <p className="text-gray-700 font-medium">{error ? "Sign-in failed" : status}</p>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-            <p className="text-red-700 text-sm font-mono break-all">{error}</p>
-          </div>
-        )}
-
-        {/* Success actions */}
-        {success && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-            <p className="text-green-800 font-semibold mb-2">Authentication succeeded!</p>
-            <p className="text-green-700 text-sm mb-3">Check the /api/auth/me result below. If it shows your user, click Go to Dashboard.</p>
-            <a
-              href="/dashboard"
-              className="inline-block px-5 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 text-sm"
-            >
-              Go to Dashboard →
-            </a>
-          </div>
-        )}
-
-        {/* Diagnostics */}
-        {diag && (
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-            <p className="font-semibold text-gray-800 text-sm mb-3">Diagnostics</p>
-            <div className="space-y-1.5 text-sm font-mono">
-              <div className={diag.hasCode ? "text-green-700" : "text-red-700"}>
-                code in URL: {diag.hasCode ? "✅ YES" : "❌ NO"}
-              </div>
-              <div className={diag.hasState ? "text-green-700" : "text-red-700"}>
-                state in URL: {diag.hasState ? "✅ YES" : "❌ NO"}
-              </div>
-              <div className={diag.msalKeyCount > 0 ? "text-green-700" : "text-red-700"}>
-                MSAL sessionStorage keys: {diag.msalKeyCount > 0 ? `✅ ${diag.msalKeyCount} found` : "❌ 0 found"}
-              </div>
-              <div className={diag.msalResult.startsWith("✅") ? "text-green-700" : "text-red-700"}>
-                MSAL result: {diag.msalResult}
-              </div>
-              {diag.apiStatus !== undefined && (
-                <div className={diag.apiStatus < 300 ? "text-green-700" : "text-red-700"}>
-                  /api/auth/callback: HTTP {diag.apiStatus} → {(diag.apiBody ?? "").substring(0, 200)}
-                </div>
-              )}
-              {diag.sessionCheck && (
-                <div className={diag.sessionCheck.includes("200") ? "text-green-700" : "text-red-700"}>
-                  {diag.sessionCheck}
-                </div>
-              )}
-              <div className="text-gray-400 break-all text-xs mt-2 pt-2 border-t border-gray-100">
-                URL: {diag.url}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-3 flex-wrap">
-          <a href="/auth/signin" className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300">
-            ← Back to Sign In
-          </a>
-          {diag && (
-            <button
-              onClick={() => {
-                const text = `DIAG:\n${JSON.stringify(diag, null, 2)}\n\nERROR: ${error}`;
-                navigator.clipboard?.writeText(text).catch(() => {});
-                alert("Copied!");
-              }}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200"
-            >
-              📋 Copy Diagnostics
-            </button>
-          )}
-        </div>
+        <div className="w-8 h-8 border-2 border-[#0078D4] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-600 font-medium">Completing sign-in...</p>
       </div>
     </div>
   );

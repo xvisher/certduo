@@ -1,73 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { getMsalInstance, clearMsalState, loginRequest } from "@/lib/auth-client";
+import { useState } from "react";
+import { getMsalInstance, loginRequest } from "@/lib/auth-client";
 
-function SignInContent() {
-  const [loading, setLoading] = useState(true); // start true while we process any pending redirect
+export default function SignInPage() {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    // Check for error param passed from callback page (legacy redirect path)
-    const errorParam = searchParams.get("error");
-    if (errorParam === "callback_failed") {
-      setError("Authentication failed — please try again.");
-    } else if (errorParam === "unknown") {
-      setError("An unexpected error occurred. Please try again.");
-    }
-
-    // Always handle any pending redirect promise on mount.
-    // This clears MSAL's in-progress flag and processes the return from Microsoft login.
-    async function init() {
-      try {
-        const msal = await getMsalInstance();
-        const result = await msal.handleRedirectPromise();
-        if (result?.accessToken) {
-          await exchangeTokenForSession(result.accessToken);
-          return;
-        }
-      } catch (err) {
-        console.error("MSAL init error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    init();
-  }, [searchParams]);
-
-  async function exchangeTokenForSession(accessToken: string) {
-    const res = await fetch("/api/auth/callback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken }),
-    });
-
-    if (res.ok) {
-      window.location.href = "/dashboard";
-    } else {
-      setError("Failed to create session. Please try again.");
-    }
-  }
 
   async function handleSignIn() {
     setLoading(true);
     setError(null);
     try {
       const msal = await getMsalInstance();
-      await msal.loginRedirect(loginRequest);
-      // browser redirects away here — code below won't run
-    } catch (err: unknown) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("interaction_in_progress")) {
-        // Stale MSAL state — clear and let the user try once more
-        clearMsalState();
-        setError("Previous sign-in was interrupted. Please try again.");
+
+      // Use popup — no page navigation, no redirect issues, no service worker interference
+      const result = await msal.loginPopup({
+        ...loginRequest,
+        // Popup uses the same redirectUri but handles it internally
+        redirectUri: `${window.location.origin}/auth/callback`,
+      });
+
+      if (!result?.accessToken) {
+        setError("No access token received. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Exchange the token for a session cookie
+      const res = await fetch("/api/auth/callback", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken: result.accessToken,
+          idToken: result.idToken,
+        }),
+      });
+
+      if (res.ok) {
+        // Redirect to dashboard — cookie is already set
+        window.location.href = "/dashboard";
       } else {
-        setError("Sign in failed. Please try again.");
+        const body = await res.text().catch(() => "unknown error");
+        setError(`Sign-in failed (${res.status}): ${body}`);
+        setLoading(false);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // User cancelled the popup — don't show error
+      if (msg.includes("user_cancelled") || msg.includes("popup_window_error") || msg.includes("access_denied")) {
+        setError(null);
+      } else if (msg.includes("popup_blocked")) {
+        setError("Popup was blocked. Please allow popups for this site and try again.");
+      } else {
+        setError(`Sign-in error: ${msg}`);
       }
       setLoading(false);
     }
@@ -120,17 +106,5 @@ function SignInContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#0078D4] border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
-      <SignInContent />
-    </Suspense>
   );
 }
