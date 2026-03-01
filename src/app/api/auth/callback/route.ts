@@ -65,11 +65,12 @@ export async function POST(request: NextRequest) {
       displayName: user.displayName,
     });
 
-    // Set session cookie
-    const response = NextResponse.json({ success: true, isNewUser });
+    // Return the session token so the client can use /api/auth/establish-session
+    // to set the cookie via a real browser navigation (more reliable than fetch Set-Cookie)
+    const response = NextResponse.json({ success: true, isNewUser, sessionToken: token });
     response.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",

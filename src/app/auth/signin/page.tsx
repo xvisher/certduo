@@ -46,8 +46,21 @@ export default function SignInPage() {
       });
 
       if (res.ok) {
-        // Redirect to dashboard — cookie is already set
-        window.location.href = "/dashboard";
+        const data = await res.json();
+        // Use a real form POST to /api/auth/establish-session
+        // This is a real browser navigation, so the Set-Cookie header
+        // from the response WILL be stored (unlike fetch() responses).
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/api/auth/establish-session";
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "token";
+        input.value = data.sessionToken;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        return; // form.submit() navigates the page
       } else {
         const body = await res.text().catch(() => "unknown error");
         setError(`Sign-in failed (${res.status}): ${body}`);
