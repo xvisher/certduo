@@ -147,6 +147,19 @@ export default function SettingsPage() {
       {/* Install PWA */}
       <InstallPrompt />
 
+      {/* Admin panel link — pro users only */}
+      {user?.tier === "pro" && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="font-semibold text-gray-900 mb-2">Admin</h2>
+          <p className="text-gray-500 text-sm mb-3">
+            Manage users and upgrade or downgrade their tier.
+          </p>
+          <Button variant="outline" onClick={() => { window.location.href = "/admin"; }} className="w-full">
+            Open User Admin →
+          </Button>
+        </div>
+      )}
+
       {/* Sign out */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h2 className="font-semibold text-gray-900 mb-2">Account</h2>
