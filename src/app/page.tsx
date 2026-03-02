@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -17,12 +18,7 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       {/* Header */}
       <header className="px-4 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0078D4] flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
-          </div>
-          <span className="font-bold text-xl text-gray-900">CertDuo</span>
-        </div>
+        <Image src="/logo.jpg" alt="CertDuo" width={140} height={56} className="h-14 w-auto object-contain" />
         <Link
           href="/auth/signin"
           className="px-4 py-2 rounded-lg border border-[#0078D4] text-[#0078D4] font-medium hover:bg-blue-50 transition-colors"

@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "CertDuo",
+    startupImage: "/icons/apple-touch-icon.png",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+    icon: "/icons/icon-192.png",
   },
   formatDetection: {
     telephone: false,

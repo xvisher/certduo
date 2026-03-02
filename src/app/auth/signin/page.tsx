@@ -38,10 +38,7 @@ export default async function SignInPage({
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#0078D4] flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">C</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to CertDuo</h1>
+          <img src="/logo.jpg" alt="CertDuo" className="h-24 w-auto mx-auto mb-4 object-contain" />
           <p className="text-gray-500 text-sm mt-2">Sign in to start your certification journey</p>
         </div>
 
