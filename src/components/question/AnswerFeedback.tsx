@@ -49,11 +49,11 @@ export function AnswerFeedback({ result, question, onContinue, onDocConfirm }: A
         </div>
       )}
 
-      {/* Documentation links (shown on incorrect) */}
-      {!correct && documentationLinks && documentationLinks.length > 0 && (
+      {/* Documentation links (always shown) */}
+      {documentationLinks && documentationLinks.length > 0 && (
         <div className="mb-4">
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Read to understand
+            {correct ? "Dive deeper" : "Read to understand"}
           </div>
           <div className="space-y-2">
             {(documentationLinks as DocLink[]).map((doc, i) => (
