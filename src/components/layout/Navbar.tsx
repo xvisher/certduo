@@ -28,8 +28,9 @@ export function Navbar({ user }: NavbarProps) {
       {/* Top header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center">
-            <Image src="/logo.png" alt="CertDuo" width={120} height={48} className="h-11 w-auto object-contain" />
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Image src="/icon-mark.png" alt="CertDuo" width={32} height={32} className="h-8 w-auto object-contain" />
+            <span className="font-bold text-gray-900">CertDuo</span>
           </Link>
 
           {user && (
