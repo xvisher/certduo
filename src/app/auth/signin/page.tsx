@@ -38,7 +38,7 @@ export default async function SignInPage({
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src="/logo.jpg" alt="CertDuo" className="h-24 w-auto mx-auto mb-4 object-contain" />
+          <img src="/logo.png" alt="CertDuo" className="h-24 w-auto mx-auto mb-4 object-contain" />
           <p className="text-gray-500 text-sm mt-2">Sign in to start your certification journey</p>
         </div>
 
