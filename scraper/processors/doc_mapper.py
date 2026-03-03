@@ -330,6 +330,102 @@ MS102_DOC_MAP = {
 }
 
 
+PL300_DOC_MAP = {
+    # Power Query / data prep
+    "power query": "https://learn.microsoft.com/en-us/power-query/power-query-what-is-power-query",
+    "power query editor": "https://learn.microsoft.com/en-us/power-query/power-query-what-is-power-query",
+    "replace values": "https://learn.microsoft.com/en-us/power-query/replace-values",
+    "replace errors": "https://learn.microsoft.com/en-us/power-query/dealing-with-errors",
+    "pivot column": "https://learn.microsoft.com/en-us/power-query/pivot-columns",
+    "unpivot": "https://learn.microsoft.com/en-us/power-query/unpivot-column",
+    "merge queries": "https://learn.microsoft.com/en-us/power-query/merge-queries-overview",
+    "left outer join": "https://learn.microsoft.com/en-us/power-query/merge-queries-left-outer",
+    "append queries": "https://learn.microsoft.com/en-us/power-query/append-queries",
+    "group by": "https://learn.microsoft.com/en-us/power-query/group-by",
+    "data types": "https://learn.microsoft.com/en-us/power-bi/connect-data/desktop-data-types",
+    "query folding": "https://learn.microsoft.com/en-us/power-query/power-query-folding",
+    # Star schema / data modeling
+    "star schema": "https://learn.microsoft.com/en-us/power-bi/guidance/star-schema",
+    "fact table": "https://learn.microsoft.com/en-us/power-bi/guidance/star-schema",
+    "dimension table": "https://learn.microsoft.com/en-us/power-bi/guidance/star-schema",
+    "semantic model": "https://learn.microsoft.com/en-us/power-bi/connect-data/service-datasets-understand",
+    "data model": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-relationships-understand",
+    # Relationships
+    "relationship": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-relationships-understand",
+    "cardinality": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-relationships-understand",
+    "one-to-many": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-relationships-understand",
+    "many-to-many": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-many-to-many-relationships",
+    "role-playing dimension": "https://learn.microsoft.com/en-us/power-bi/guidance/relationships-one-to-one",
+    "mark as date table": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-date-tables",
+    "date table": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-date-tables",
+    # DAX
+    "dax": "https://learn.microsoft.com/en-us/dax/dax-overview",
+    "calculated column": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-calculated-columns",
+    "calculated table": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-calculated-tables",
+    "measure": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-measures",
+    "calculate function": "https://learn.microsoft.com/en-us/dax/calculate-function-dax",
+    "sameperiodlastyear": "https://learn.microsoft.com/en-us/dax/sameperiodlastyear-function-dax",
+    "time intelligence": "https://learn.microsoft.com/en-us/dax/time-intelligence-functions-dax",
+    "removefilters": "https://learn.microsoft.com/en-us/dax/removefilters-function-dax",
+    "filter context": "https://learn.microsoft.com/en-us/power-bi/guidance/dax-understand-context",
+    "row context": "https://learn.microsoft.com/en-us/power-bi/guidance/dax-understand-context",
+    "median": "https://learn.microsoft.com/en-us/dax/median-function-dax",
+    "lastnonblank": "https://learn.microsoft.com/en-us/dax/lastnonblank-function-dax",
+    "firstnonblank": "https://learn.microsoft.com/en-us/dax/firstnonblank-function-dax",
+    "rankx": "https://learn.microsoft.com/en-us/dax/rankx-function-dax",
+    # Model performance
+    "performance analyzer": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-performance-analyzer",
+    "aggregation": "https://learn.microsoft.com/en-us/power-bi/transform-model/aggregations-advanced",
+    "import mode": "https://learn.microsoft.com/en-us/power-bi/connect-data/service-dataset-modes-understand",
+    "directquery": "https://learn.microsoft.com/en-us/power-bi/connect-data/desktop-directquery-about",
+    "composite model": "https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-composite-models",
+    # Visuals
+    "visualization": "https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-types-for-reports-and-q-and-a",
+    "scatter chart": "https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-scatter",
+    "matrix visual": "https://learn.microsoft.com/en-us/power-bi/visuals/desktop-matrix-visual",
+    "anomaly detection": "https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-anomaly-detection",
+    "clustering": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-grouping-visuals",
+    # Q&A
+    "q&a": "https://learn.microsoft.com/en-us/power-bi/consumer/end-user-q-and-a",
+    "synonym": "https://learn.microsoft.com/en-us/power-bi/natural-language/q-and-a-tooling-intro",
+    "natural language": "https://learn.microsoft.com/en-us/power-bi/natural-language/q-and-a-tooling-intro",
+    # Report design
+    "bookmark": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-bookmarks",
+    "selection pane": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-bookmarks",
+    "tooltip": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-tooltips",
+    "report tooltip": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-tooltips",
+    "canvas background": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-report-themes",
+    "wallpaper": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-report-themes",
+    "edit interactions": "https://learn.microsoft.com/en-us/power-bi/create-reports/service-reports-visual-interactions",
+    "visual interaction": "https://learn.microsoft.com/en-us/power-bi/create-reports/service-reports-visual-interactions",
+    "drill down": "https://learn.microsoft.com/en-us/power-bi/consumer/end-user-drill",
+    "drill through": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-drillthrough",
+    "layer order": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-accessibility-creating-reports",
+    "conditional formatting": "https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-conditional-format-visual-titles",
+    "slicer": "https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-slicers",
+    # Paginated reports
+    "paginated report": "https://learn.microsoft.com/en-us/power-bi/paginated-reports/paginated-reports-report-builder-power-bi",
+    "report builder": "https://learn.microsoft.com/en-us/power-bi/paginated-reports/paginated-reports-report-builder-power-bi",
+    # Service / deployment
+    "power bi service": "https://learn.microsoft.com/en-us/power-bi/fundamentals/power-bi-service-overview",
+    "workspace": "https://learn.microsoft.com/en-us/power-bi/collaborate-share/service-create-the-new-workspaces",
+    "power bi app": "https://learn.microsoft.com/en-us/power-bi/collaborate-share/service-create-distribute-apps",
+    "scheduled refresh": "https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-scheduled-refresh",
+    "data refresh": "https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-data",
+    "gateway": "https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-onprem",
+    "on-premises data gateway": "https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-onprem",
+    "row-level security": "https://learn.microsoft.com/en-us/power-bi/enterprise/service-admin-rls",
+    "rls": "https://learn.microsoft.com/en-us/power-bi/enterprise/service-admin-rls",
+    "build permission": "https://learn.microsoft.com/en-us/power-bi/connect-data/service-datasets-build-permissions",
+    "analyze in excel": "https://learn.microsoft.com/en-us/power-bi/collaborate-share/service-analyze-in-excel",
+    "shared capacity": "https://learn.microsoft.com/en-us/power-bi/fundamentals/service-features-license-type",
+    "premium capacity": "https://learn.microsoft.com/en-us/power-bi/enterprise/service-premium-what-is",
+    "power bi desktop": "https://learn.microsoft.com/en-us/power-bi/fundamentals/desktop-what-is-desktop",
+    "deployment pipeline": "https://learn.microsoft.com/en-us/power-bi/create-reports/deployment-pipelines-overview",
+    "endorsement": "https://learn.microsoft.com/en-us/power-bi/collaborate-share/service-endorse-content",
+}
+
+
 def _get_doc_map(cert_code: str) -> dict:
     """Get the keyword→URL map for a specific cert."""
     maps = {
@@ -337,6 +433,7 @@ def _get_doc_map(cert_code: str) -> dict:
         "AZ-104": AZ900_DOC_MAP,
         "MD-102": MD102_DOC_MAP,
         "MS-102": MS102_DOC_MAP,
+        "PL-300": PL300_DOC_MAP,
     }
     return maps.get(cert_code, AZ900_DOC_MAP)
 

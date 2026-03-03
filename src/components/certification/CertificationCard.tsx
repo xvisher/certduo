@@ -10,6 +10,7 @@ const CERT_EMOJIS: Record<string, string> = {
   "AZ-104": "⚙️",
   "MD-102": "💻",
   "MS-102": "🏢",
+  "PL-300": "📊",
 };
 
 const CERT_COLORS: Record<string, string> = {
@@ -17,6 +18,7 @@ const CERT_COLORS: Record<string, string> = {
   "AZ-104": "from-indigo-50 to-blue-50",
   "MD-102": "from-violet-50 to-purple-50",
   "MS-102": "from-teal-50 to-emerald-50",
+  "PL-300": "from-yellow-50 to-amber-50",
 };
 
 interface CertificationCardProps {

@@ -82,6 +82,18 @@ CERT_MODULES = {
         ("SharePoint Online",             "learn.wwl.manage-sharepoint-online-use-windows-powershell"),
         ("Licensing",                     "learn.azure-security.manage-users-and-groups-in-aad"),
     ],
+    "PL-300": [
+        ("Power Query Transformations",   "learn-bizapps.clean-data-power-bi"),
+        ("Star Schema Design",            "learn-bizapps.configure-semantic-model-power-bi"),
+        ("Data Relationships",            "learn-bizapps.configure-semantic-model-power-bi"),
+        ("DAX Measures",                  "learn-bizapps.dax-power-bi-create-calculations"),
+        ("Model Performance",             "learn-bizapps.optimize-model-power-bi"),
+        ("Q&A and Synonyms",              "learn.wwl.choose-power-bi-model-framework"),
+        ("Report Visuals",                "learn-bizapps.power-bi-effective-reports"),
+        ("Report Configuration",          "learn-bizapps.power-bi-effective-reports"),
+        ("Report Types",                  "learn.wwl.create-manage-power-bi-assets"),
+        ("Workspace Management",          "learn-bizapps.manage-workspaces-power-bi-service"),
+    ],
 }
 
 # Skip these unit types — they have no real article content
@@ -129,8 +141,20 @@ def _get_module_units(module_uid: str) -> Optional[dict]:
 
 
 def _unit_url(module_slug: str, unit_index: int, unit_uid: str) -> str:
-    """Construct a unit page URL from module slug, index (1-based), and unit UID."""
+    """Construct a unit page URL from module slug, index (1-based), and unit UID.
+
+    Some modules already embed the index in the slug (e.g. 'learn-bizapps.*')
+    producing UIDs like '2-shape-data' or '1a-optimization-techniques'.
+    In those cases use the slug directly without prepending the index again.
+    """
     unit_slug = unit_uid.split(".")[-1]
+    # If the slug already starts with a digit (optionally followed by a letter
+    # and a hyphen), it already contains the positional prefix — use it as-is.
+    if re.match(r"^\d+[a-z]?-", unit_slug):
+        return (
+            f"https://learn.microsoft.com/en-us/training/modules/"
+            f"{module_slug}/{unit_slug}/"
+        )
     return (
         f"https://learn.microsoft.com/en-us/training/modules/"
         f"{module_slug}/{unit_index}-{unit_slug}/"
